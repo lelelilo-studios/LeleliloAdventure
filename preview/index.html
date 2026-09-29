@@ -43,12 +43,7 @@
   #blank h2 { margin: 0 0 6px; font: 900 20px 'Alegreya', Georgia, serif; }
   #blank button { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border: 0; border-radius: 10px; background: rgba(255,255,255,.08); color: var(--cream); font: 800 15px 'Alegreya Sans', sans-serif; cursor: pointer; }
   #blank.hidden, .help.hidden { display: none; }
-  /* A hint on the title card, until the interface can say it itself */
-  #hint { position: fixed; left: 50%; bottom: max(28px, calc(env(safe-area-inset-bottom) + 16px)); transform: translate(-50%, 6px); z-index: 1; pointer-events: none;
-    font: 700 15px 'Alegreya Sans', system-ui, sans-serif; letter-spacing: .04em; color: var(--thread); text-shadow: 0 2px 10px rgba(0,0,0,.6); opacity: 0; transition: opacity .8s ease, transform .8s ease; }
-  #hint.on { opacity: .85; transform: translate(-50%, 0); animation: breathe 2.6s ease-in-out .8s infinite; }
-  @keyframes breathe { 50% { opacity: .5; } }
-  @media (prefers-reduced-motion: reduce) { .pillow, #hint.on { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .pillow { animation: none; } }
 </style>
 </head>
 <body>
@@ -99,8 +94,6 @@
   <p id="why" style="font-size:13px"></p>
 </div>
 
-<div id="hint" aria-live="polite"></div>
-
 <div id="blank" class="hidden" role="alert">
   <button id="blank-close" aria-label="Dismiss">✕</button>
   <h2>Only seeing a dark screen?</h2>
@@ -114,7 +107,7 @@
 </div>
 
 <script type="module">
-  const BUILD = '6d66bcd';
+  const BUILD = 'df7bdcc';
   window.__lelelilo_build = BUILD;
   // Browsers start sound only after a tap or a key: the game's audio context (window.__lelelilo_audio) is resumed on
   // the first one, and paused while the page is hidden (another tab, a phone's home screen)
@@ -170,23 +163,6 @@
     $('blank-close').onclick = () => $('blank').classList.add('hidden');
   }
 
-  // On the title card: say how to go on; then, in the meadow, how to float about (until the interface can say it)
-  function showHint() {
-    const hint = $('hint'), touch = matchMedia('(pointer: coarse)').matches;
-    hint.textContent = touch ? 'Tap to visit the test meadow' : 'Click or press a key to visit the test meadow';
-    let t = setTimeout(() => hint.classList.add('on'), 1400);
-    const enter = () => {
-      clearTimeout(t); hint.classList.remove('on'); removeEventListener('pointerdown', enter); removeEventListener('keydown', enter);
-      t = setTimeout(() => {
-        hint.textContent = touch ? 'Drag on the left to float · pinch to zoom · twist to turn'
-          : 'WASD to float · Space to boop · Shift to dash · Z / C to turn · wheel to zoom';
-        hint.classList.add('on');
-        t = setTimeout(() => hint.classList.remove('on'), 7000);
-      }, 900);
-    };
-    addEventListener('pointerdown', enter); addEventListener('keydown', enter);
-  }
-
   // Download the game with progress (the thread is sewn as the bytes arrive)
   async function fetchWasm(url) {
     const res = await fetch(url);
@@ -213,7 +189,6 @@
       addEventListener('lelelilo-ready', () => {
         setProgress(1); $('status').textContent = 'Ready'; setTimeout(() => $('loading').classList.add('gone'), 250); $('lelelilo').focus();
         if (!/capture/.test(location.search)) setTimeout(checkVisible, 800);
-        if (!/capture|scene=/.test(location.search)) showHint();
       }, { once: true });
       const [{ default: init }, wasm] = await Promise.all([import(`./pkg/lelelilo.js?v=${BUILD}`), fetchWasm(`./pkg/lelelilo_bg.wasm?v=${BUILD}`)]);
       $('status').textContent = 'Stuffing the cushion…';
