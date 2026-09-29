@@ -114,7 +114,16 @@
 </div>
 
 <script type="module">
-  const BUILD = '3025c52';
+  const BUILD = '6e91961';
+  window.__lelelilo_build = BUILD;
+  // Browsers start sound only after a tap or a key: the game's audio context (window.__lelelilo_audio) is resumed on
+  // the first one, and paused while the page is hidden (another tab, a phone's home screen)
+  const unlockAudio = () => { const a = window.__lelelilo_audio; if (a && a.state !== 'running' && !document.hidden) a.resume().catch(() => {}); };
+  for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, unlockAudio, { capture: true });
+  document.addEventListener('visibilitychange', () => {
+    const a = window.__lelelilo_audio; if (!a) return;
+    if (document.hidden) a.suspend().catch(() => {}); else if (navigator.userActivation?.hasBeenActive) a.resume().catch(() => {});
+  });
   const $ = id => document.getElementById(id);
   const show = id => { for (const s of ['loading', 'unsupported', 'failed']) $(s).classList.toggle('hidden', s !== id); };
   const setProgress = k => {
