@@ -107,8 +107,14 @@
 </div>
 
 <script type="module">
-  const BUILD = 'ea9996d';
+  const BUILD = '890f3de';
   window.__lelelilo_build = BUILD;
+  // The screen's safe area (notches, rounded corners, the home bar) in CSS pixels, for the game's interface
+  const insetProbe = document.createElement('div');
+  insetProbe.style.cssText = 'position:fixed;inset:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+  document.body.appendChild(insetProbe);
+  const measureInsets = () => { const s = getComputedStyle(insetProbe); window.__lelelilo_insets = [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft].map(v => parseFloat(v) || 0); };
+  measureInsets(); addEventListener('resize', measureInsets);
   // Browsers start sound only after a tap or a key: the game's audio context (window.__lelelilo_audio) is resumed on
   // the first one, and paused while the page is hidden (another tab, a phone's home screen)
   const unlockAudio = () => { const a = window.__lelelilo_audio; if (a && a.state !== 'running' && !document.hidden) a.resume().catch(() => {}); };
