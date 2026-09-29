@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#140f22">
+<meta name="description" content="Lelelilo's Adventure: a floating pillow wizard's journey through Oakvale and the Sundered Abyss.">
+<title>Lelelilo's Adventure</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@800;900&family=Alegreya+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --night: #140f22; --plum: #221a38; --cream: #ece0c7; --brass: #f2c46d; --thread: #e8dcc0; --dim: #a79fc0; }
+  html, body { margin: 0; height: 100%; background: var(--night); color: var(--cream); overflow: hidden; }
+  body { font: 500 16px 'Alegreya Sans', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  canvas#lelelilo { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; touch-action: none; outline: none; }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    background: radial-gradient(ellipse 70% 55% at 50% 45%, #2a2142, var(--night) 75%); text-align: center; transition: opacity .7s ease; z-index: 2; }
+  .screen.gone { opacity: 0; pointer-events: none; }
+  .screen.hidden { display: none; }
+  h1 { margin: 0; font: 900 clamp(34px, 7vw, 64px)/1 'Alegreya', Georgia, serif; color: var(--cream); letter-spacing: .01em; text-shadow: 0 3px 0 #6b4a2e, 0 10px 30px rgba(0,0,0,.5); }
+  h1 span { color: var(--brass); }
+  p { margin: 0; max-width: 34em; line-height: 1.5; color: var(--dim); }
+  /* Loading: a thread sewn across in a running stitch, a needle leading it */
+  .seam { width: min(360px, 80vw); height: 26px; }
+  .seam .guide { stroke: rgba(232,220,192,.14); stroke-width: 2; stroke-dasharray: 7 6; fill: none; }
+  .seam .sewn { stroke: var(--brass); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 7 6; fill: none; }
+  .seam .needle { fill: #dfe3ea; transition: transform .25s ease; }
+  .status { font: 700 13px 'Alegreya Sans', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .pillow { width: 132px; height: 132px; animation: bob 2.8s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-8px) rotate(1.5deg); } }
+  .browsers { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 30em; }
+  .browsers a { color: var(--cream); text-decoration: none; padding: 9px 14px; border-radius: 12px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(232,220,192,.18); font-weight: 700; }
+  .browsers a:hover { background: rgba(255,255,255,.1); }
+  .err { font: 500 13px ui-monospace, monospace; color: #ffb4b4; white-space: pre-wrap; max-width: 90vw; }
+  @media (prefers-reduced-motion: reduce) { .pillow { animation: none; } }
+</style>
+</head>
+<body>
+<canvas id="lelelilo" tabindex="0" aria-label="Lelelilo's Adventure"></canvas>
+
+<div class="screen" id="loading" role="status" aria-live="polite">
+  <svg class="pillow" viewBox="0 0 120 120" aria-hidden="true">
+    <ellipse cx="60" cy="112" rx="30" ry="4" fill="rgba(0,0,0,.35)"/>
+    <path d="M14,12 Q60,24 106,12 Q96,56 104,98 Q60,108 16,98 Q24,56 14,12Z" fill="#ece0c7" stroke="#2a1c30" stroke-width="3"/>
+    <path d="M22,20 Q60,30 98,20 Q89,56 96,91 Q60,100 24,91 Q31,56 22,20Z" fill="none" stroke="#b09a7c" stroke-width="2" stroke-dasharray="4 3.5"/>
+    <ellipse cx="46" cy="50" rx="5.5" ry="7.5" fill="#1d1310"/><ellipse cx="74" cy="50" rx="5.5" ry="7.5" fill="#1d1310"/>
+    <circle cx="44.5" cy="47.5" r="2" fill="#fff"/><circle cx="72.5" cy="47.5" r="2" fill="#fff"/>
+    <path d="M53,60 Q60,66 67,60" fill="none" stroke="#1d1310" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="35" cy="60" r="3" fill="#ffc94a"/><circle cx="85" cy="60" r="3" fill="#ffc94a"/>
+  </svg>
+  <h1>Lelelilo's <span>Adventure</span></h1>
+  <svg class="seam" viewBox="0 0 360 26" aria-hidden="true">
+    <path class="guide" d="M6,13 H354"/>
+    <path class="sewn" id="sewn" d="M6,13 H354" style="stroke-dasharray: 7 6; clip-path: inset(0 100% 0 0)"/>
+    <g class="needle" id="needle"><path d="M0,13 L22,11.2 L25,13 L22,14.8 Z"/><ellipse cx="4.5" cy="13" rx="2.6" ry=".9" fill="#140f22"/></g>
+  </svg>
+  <div class="status" id="status">Threading the needle…</div>
+</div>
+
+<div class="screen hidden" id="unsupported">
+  <svg class="pillow" viewBox="0 0 120 120" aria-hidden="true">
+    <ellipse cx="60" cy="112" rx="30" ry="4" fill="rgba(0,0,0,.35)"/>
+    <g transform="rotate(-6 60 60)">
+      <path d="M14,12 Q60,24 106,12 Q96,56 104,98 Q60,108 16,98 Q24,56 14,12Z" fill="#ece0c7" stroke="#2a1c30" stroke-width="3"/>
+      <path d="M22,20 Q60,30 98,20 Q89,56 96,91 Q60,100 24,91 Q31,56 22,20Z" fill="none" stroke="#b09a7c" stroke-width="2" stroke-dasharray="4 3.5"/>
+      <path d="M39,44 L52,40 M81,44 L68,40" stroke="#1d1310" stroke-width="2.6" stroke-linecap="round"/>
+      <ellipse cx="46" cy="52" rx="5" ry="6.5" fill="#1d1310"/><ellipse cx="74" cy="52" rx="5" ry="6.5" fill="#1d1310"/>
+      <circle cx="44.5" cy="50" r="1.8" fill="#fff"/><circle cx="72.5" cy="50" r="1.8" fill="#fff"/>
+      <path d="M53,66 Q60,62 67,66" fill="none" stroke="#1d1310" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <path d="M6,40 q-4,-8 2,-12 M114,40 q4,-8 -2,-12" stroke="#a79fc0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <text x="96" y="20" font-family="Alegreya, serif" font-weight="900" font-size="22" fill="#f2c46d">?</text>
+  </svg>
+  <h1>Lelelilo can't float here</h1>
+  <p>Lelelilo's Adventure needs <b>WebGPU</b>, which this browser doesn't offer yet. It works in these:</p>
+  <div class="browsers">
+    <a href="https://www.google.com/chrome/" rel="noopener">Chrome · desktop &amp; Android</a>
+    <a href="https://www.microsoft.com/edge" rel="noopener">Edge</a>
+    <a href="https://www.apple.com/safari/" rel="noopener">Safari 26+ · Mac, iPhone, iPad</a>
+    <a href="https://www.mozilla.org/firefox/" rel="noopener">Firefox · Windows &amp; Mac</a>
+  </div>
+  <p id="why" style="font-size:13px"></p>
+</div>
+
+<div class="screen hidden" id="failed">
+  <h1>Lelelilo tripped</h1>
+  <p>Something went wrong while starting the game. Reloading usually helps.</p>
+  <div class="err" id="errtext"></div>
+</div>
+
+<script type="module">
+  const BUILD = '3368dd3';
+  const $ = id => document.getElementById(id);
+  const show = id => { for (const s of ['loading', 'unsupported', 'failed']) $(s).classList.toggle('hidden', s !== id); };
+  const setProgress = k => {
+    k = Math.max(0, Math.min(1, k));
+    $('sewn').style.clipPath = `inset(0 ${(1 - k) * 100}% 0 0)`;
+    $('needle').style.transform = `translateX(${6 + k * 326}px)`;
+  };
+  const fail = e => { console.error(e); $('errtext').textContent = String(e && e.message || e); show('failed'); };
+
+  async function hasWebGPU() {
+    if (!navigator.gpu) return 'This browser has no WebGPU.';
+    try { const a = await navigator.gpu.requestAdapter(); return a ? null : 'WebGPU is present but found no usable graphics adapter.'; }
+    catch (e) { return 'WebGPU could not start: ' + e.message; }
+  }
+
+  // Download the game with progress (the thread is sewn as the bytes arrive)
+  async function fetchWasm(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Could not download the game (${res.status})`);
+    const total = +res.headers.get('content-length') || 0, reader = res.body.getReader(), parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      parts.push(value); got += value.length;
+      setProgress(total ? got / total * 0.9 : Math.min(0.9, got / 6e6));
+    }
+    return new Response(new Blob(parts), { headers: { 'Content-Type': 'application/wasm' } });
+  }
+
+  (async () => {
+    const why = await hasWebGPU();
+    if (why) { $('why').textContent = why; show('unsupported'); return; }
+    try {
+      addEventListener('lelelilo-ready', () => { setProgress(1); $('status').textContent = 'Ready'; setTimeout(() => $('loading').classList.add('gone'), 250); $('lelelilo').focus(); }, { once: true });
+      const [{ default: init }, wasm] = await Promise.all([import(`./pkg/lelelilo.js?v=${BUILD}`), fetchWasm(`./pkg/lelelilo_bg.wasm?v=${BUILD}`)]);
+      $('status').textContent = 'Stuffing the cushion…';
+      await init({ module_or_path: wasm });
+    } catch (e) { fail(e); }
+  })();
+</script>
+</body>
+</html>
