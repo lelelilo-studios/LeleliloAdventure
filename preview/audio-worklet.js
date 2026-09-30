@@ -24,10 +24,16 @@ class LeleliloAudio extends AudioWorkletProcessor {
   process(_, outputs) {
     const out = outputs[0];
     if (!this.w || !out || !out.length) return true;
-    const n = out[0].length, p = this.w.render(n);
-    const samples = new Float32Array(this.w.memory.buffer, p, n * 2);
-    out[0].set(samples.subarray(0, n));
-    if (out[1]) out[1].set(samples.subarray(n, n * 2));
+    const n = out[0].length, p = this.w.render(n), memory = this.w.memory.buffer;
+    // (the views onto the synthesizer's two channels are kept: made anew only when its memory moves or grows, so
+    // the audio thread makes no garbage)
+    if (this.memory !== memory || this.at !== p || this.n !== n) {
+      [this.memory, this.at, this.n] = [memory, p, n];
+      this.left = new Float32Array(memory, p, n);
+      this.right = new Float32Array(memory, p + n * 4, n);
+    }
+    out[0].set(this.left);
+    if (out[1]) out[1].set(this.right);
     return true;
   }
 }

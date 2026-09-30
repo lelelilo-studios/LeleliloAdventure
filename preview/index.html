@@ -119,7 +119,7 @@
 </div>
 
 <script type="module">
-  const BUILD = 'c09a833';
+  const BUILD = '420bcb6';
   window.__lelelilo_build = BUILD;
   // The screen's safe area (notches, rounded corners, the home bar) in CSS pixels, for the game's interface
   const insetProbe = document.createElement('div');
@@ -135,6 +135,14 @@
     const a = window.__lelelilo_audio; if (!a) return;
     if (document.hidden) a.suspend().catch(() => {}); else if (navigator.userActivation?.hasBeenActive) a.resume().catch(() => {});
   });
+  // The battery (where the browser tells: Chrome's): running low and not charging turns the game's battery saver on
+  // when it's set to Auto
+  let batteryLow = false;
+  navigator.getBattery?.().then(b => {
+    const update = () => { batteryLow = !b.charging && b.level <= 0.2; };
+    b.addEventListener('levelchange', update); b.addEventListener('chargingchange', update); update();
+  }).catch(() => {});
+  window.__lelelilo_battery_low = () => batteryLow;
   // Phones and tablets play sideways and full screen: the first tap fills the screen and turns it to landscape (where
   // the browser can: Android's; on iPhones the game shows its own "turn your phone sideways" card instead). Leaving
   // full screen is fine: the next tap comes back to it, unless it was switched off in the game's settings.
