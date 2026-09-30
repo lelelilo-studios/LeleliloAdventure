@@ -119,7 +119,7 @@
 </div>
 
 <script type="module">
-  const BUILD = 'd549902';
+  const BUILD = 'bd5e393';
   window.__lelelilo_build = BUILD;
   // The screen's safe area (notches, rounded corners, the home bar) in CSS pixels, for the game's interface
   const insetProbe = document.createElement('div');
@@ -135,6 +135,34 @@
     const a = window.__lelelilo_audio; if (!a) return;
     if (document.hidden) a.suspend().catch(() => {}); else if (navigator.userActivation?.hasBeenActive) a.resume().catch(() => {});
   });
+  // Phones and tablets play sideways and full screen: the first tap fills the screen and turns it to landscape (where
+  // the browser can: Android's; on iPhones the game shows its own "turn your phone sideways" card instead). Leaving
+  // full screen is fine: the next tap comes back to it, unless it was switched off in the game's settings.
+  const TOUCH = matchMedia('(pointer: coarse)').matches;
+  const FS_KEY = 'lelelilo_fullscreen';
+  const wantFull = () => { try { return localStorage.getItem(FS_KEY) !== 'off'; } catch (e) { return true; } };
+  const isFull = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const lockLandscape = () => { try { const p = screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape'); if (p && p.catch) p.catch(() => {}); } catch (e) {} };
+  const enterFull = () => {
+    const el = document.documentElement, req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (!req) return;
+    try { const r = req.call(el, { navigationUI: 'hide' }); if (r && r.then) r.then(lockLandscape, () => {}); else lockLandscape(); } catch (e) {}
+  };
+  if (TOUCH) {
+    const onTap = () => { if (wantFull() && !isFull()) enterFull(); };
+    for (const ev of ['pointerup', 'touchend']) addEventListener(ev, onTap, { capture: true });
+  }
+  window.__lelelilo_is_fullscreen = isFull;
+  window.__lelelilo_toggle_fullscreen = () => {
+    if (isFull()) {
+      try { localStorage.setItem(FS_KEY, 'off'); } catch (e) {}
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) exit.call(document);
+    } else {
+      try { localStorage.removeItem(FS_KEY); } catch (e) {}
+      enterFull();
+    }
+  };
   const $ = id => document.getElementById(id);
   const show = id => { for (const s of ['loading', 'unsupported', 'failed']) $(s).classList.toggle('hidden', s !== id); };
   const setProgress = k => {
