@@ -1,0 +1,14 @@
+{
+  "name": "Lelelilo's Adventure",
+  "short_name": "Lelelilo",
+  "description": "A floating pillow wizard's journey through Oakvale and the Sundered Abyss.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#140f22",
+  "theme_color": "#140f22",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
