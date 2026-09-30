@@ -2,29 +2,217 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#140f22">
+<meta name="description" content="Lelelilo's Adventure: a floating pillow wizard's journey through Oakvale and the Sundered Abyss.">
 <title>Lelelilo's Adventure</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M5,5 Q32,12 59,5 Q53,32 58,57 Q32,63 6,57 Q11,32 5,5Z' fill='%23ece0c7' stroke='%232a1c30' stroke-width='3'/%3E%3Cellipse cx='23' cy='28' rx='4' ry='5.5' fill='%231d1310'/%3E%3Cellipse cx='41' cy='28' rx='4' ry='5.5' fill='%231d1310'/%3E%3Cpath d='M27,36 Q32,41 37,36' fill='none' stroke='%231d1310' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@900&family=Alegreya+Sans:wght@500;700&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="favicon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Lelelilo's Adventure">
+<meta property="og:description" content="A floating pillow wizard's journey through Oakvale and the Sundered Abyss. Plays in the browser, on desktop and phone.">
+<meta property="og:image" content="https://lelelilo-studios.github.io/LeleliloAdventure/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://lelelilo-studios.github.io/LeleliloAdventure/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@800;900&family=Alegreya+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <style>
-  html, body { margin: 0; height: 100%; background: #140f22; color: #ece0c7; font: 500 17px 'Alegreya Sans', system-ui, sans-serif; }
-  main { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; box-sizing: border-box; text-align: center;
-    background: radial-gradient(ellipse 70% 55% at 50% 45%, #2a2142, #140f22 75%); }
-  h1 { margin: 0; font: 900 clamp(34px, 7vw, 62px)/1 'Alegreya', Georgia, serif; text-shadow: 0 3px 0 #6b4a2e, 0 10px 30px rgba(0,0,0,.5); }
-  h1 span { color: #f2c46d; }
-  p { margin: 0; color: #a79fc0; max-width: 32em; line-height: 1.5; }
-  a { display: inline-block; margin: 4px; padding: 11px 16px; border-radius: 12px; color: #ece0c7; text-decoration: none; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(232,220,192,.2); font-weight: 700; }
-  a.main { background: #f2c46d; color: #2a1a10; box-shadow: none; }
-  .stitch { width: 220px; border-top: 2px dashed rgba(232,220,192,.3); }
+  :root { --night: #140f22; --plum: #221a38; --cream: #ece0c7; --brass: #f2c46d; --thread: #e8dcc0; --dim: #a79fc0; }
+  html, body { margin: 0; height: 100%; background: var(--night); color: var(--cream); overflow: hidden; }
+  body { font: 500 16px 'Alegreya Sans', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+  canvas#lelelilo { position: fixed; inset: 0; width: 100vw; height: 100dvh; display: block; touch-action: none; outline: none; }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    background: radial-gradient(ellipse 70% 55% at 50% 45%, #2a2142, var(--night) 75%); text-align: center; transition: opacity .7s ease; z-index: 2; }
+  .screen.gone { opacity: 0; pointer-events: none; }
+  .screen.hidden { display: none; }
+  h1 { margin: 0; font: 900 clamp(34px, 7vw, 64px)/1 'Alegreya', Georgia, serif; color: var(--cream); letter-spacing: .01em; text-shadow: 0 3px 0 #6b4a2e, 0 10px 30px rgba(0,0,0,.5); }
+  h1 span { color: var(--brass); }
+  p { margin: 0; max-width: 34em; line-height: 1.5; color: var(--dim); }
+  /* Loading: a thread sewn across in a running stitch, a needle leading it */
+  .seam { width: min(360px, 80vw); height: 26px; }
+  .seam .guide { stroke: rgba(232,220,192,.14); stroke-width: 2; stroke-dasharray: 7 6; fill: none; }
+  .seam .sewn { stroke: var(--brass); stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 7 6; fill: none; }
+  .seam .needle { fill: #dfe3ea; transition: transform .25s ease; }
+  .status { font: 700 13px 'Alegreya Sans', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+  .pillow { width: 132px; height: 132px; animation: bob 2.8s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-8px) rotate(1.5deg); } }
+  .browsers { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 30em; }
+  .browsers a { color: var(--cream); text-decoration: none; padding: 9px 14px; border-radius: 12px; background: rgba(255,255,255,.06); box-shadow: inset 0 0 0 1px rgba(232,220,192,.18); font-weight: 700; }
+  .browsers a:hover { background: rgba(255,255,255,.1); }
+  .err { font: 500 13px ui-monospace, monospace; color: #ffb4b4; white-space: pre-wrap; max-width: min(90vw, 900px); max-height: 50vh; overflow: auto; text-align: left; padding: 12px 14px; border-radius: 12px; background: rgba(0,0,0,.3); }
+  .help { max-width: 34em; text-align: left; padding: 14px 16px; border-radius: 14px; background: rgba(255,255,255,.05); box-shadow: inset 0 0 0 1px rgba(232,220,192,.14); color: var(--cream); font-size: 14.5px; line-height: 1.5; }
+  .help b, #blank b { color: var(--brass); } code { font: 600 13px ui-monospace, monospace; color: var(--cream); background: rgba(0,0,0,.3); padding: 1px 5px; border-radius: 6px; }
+  .help ol, #blank ol { margin: 6px 0 0; padding-left: 20px; line-height: 1.55; } .help p { color: var(--dim); font-size: 13.5px; margin-top: 8px; }
+  /* Shown over the game when its frames never reach the screen */
+  #blank { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 3; width: min(560px, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 16px 18px 14px; border-radius: 16px; background: rgba(28,20,44,.96); box-shadow: 0 10px 40px rgba(0,0,0,.5), inset 0 0 0 1px rgba(232,220,192,.18); color: var(--cream); }
+  #blank h2 { margin: 0 0 6px; font: 900 20px 'Alegreya', Georgia, serif; }
+  #blank button { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border: 0; border-radius: 10px; background: rgba(255,255,255,.08); color: var(--cream); font: 800 15px 'Alegreya Sans', sans-serif; cursor: pointer; }
+  #blank.hidden, .help.hidden { display: none; }
+  @media (prefers-reduced-motion: reduce) { .pillow { animation: none; } }
 </style>
 </head>
 <body>
-<main>
+<canvas id="lelelilo" tabindex="0" aria-label="Lelelilo's Adventure"></canvas>
+
+<div class="screen" id="loading" role="status" aria-live="polite">
+  <svg class="pillow" viewBox="0 0 120 120" aria-hidden="true">
+    <ellipse cx="60" cy="112" rx="30" ry="4" fill="rgba(0,0,0,.35)"/>
+    <path d="M14,12 Q60,24 106,12 Q96,56 104,98 Q60,108 16,98 Q24,56 14,12Z" fill="#ece0c7" stroke="#2a1c30" stroke-width="3"/>
+    <path d="M22,20 Q60,30 98,20 Q89,56 96,91 Q60,100 24,91 Q31,56 22,20Z" fill="none" stroke="#b09a7c" stroke-width="2" stroke-dasharray="4 3.5"/>
+    <ellipse cx="46" cy="50" rx="5.5" ry="7.5" fill="#1d1310"/><ellipse cx="74" cy="50" rx="5.5" ry="7.5" fill="#1d1310"/>
+    <circle cx="44.5" cy="47.5" r="2" fill="#fff"/><circle cx="72.5" cy="47.5" r="2" fill="#fff"/>
+    <path d="M53,60 Q60,66 67,60" fill="none" stroke="#1d1310" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="35" cy="60" r="3" fill="#ffc94a"/><circle cx="85" cy="60" r="3" fill="#ffc94a"/>
+  </svg>
   <h1>Lelelilo's <span>Adventure</span></h1>
-  <div class="stitch"></div>
-  <p>Lelelilo is still being sewn together. Peek at the work in progress, or play the original adventure in the meantime.</p>
-  <div><a class="main" href="preview/">See the preview</a><a href="../Emberwild/">Play Emberwild</a></div>
-</main>
+  <svg class="seam" viewBox="0 0 360 26" aria-hidden="true">
+    <path class="guide" d="M6,13 H354"/>
+    <path class="sewn" id="sewn" d="M6,13 H354" style="stroke-dasharray: 7 6; clip-path: inset(0 100% 0 0)"/>
+    <g class="needle" id="needle"><path d="M0,13 L22,11.2 L25,13 L22,14.8 Z"/><ellipse cx="4.5" cy="13" rx="2.6" ry=".9" fill="#140f22"/></g>
+  </svg>
+  <div class="status" id="status">Threading the needle…</div>
+</div>
+
+<div class="screen hidden" id="unsupported">
+  <svg class="pillow" viewBox="0 0 120 120" aria-hidden="true">
+    <ellipse cx="60" cy="112" rx="30" ry="4" fill="rgba(0,0,0,.35)"/>
+    <g transform="rotate(-6 60 60)">
+      <path d="M14,12 Q60,24 106,12 Q96,56 104,98 Q60,108 16,98 Q24,56 14,12Z" fill="#ece0c7" stroke="#2a1c30" stroke-width="3"/>
+      <path d="M22,20 Q60,30 98,20 Q89,56 96,91 Q60,100 24,91 Q31,56 22,20Z" fill="none" stroke="#b09a7c" stroke-width="2" stroke-dasharray="4 3.5"/>
+      <path d="M39,44 L52,40 M81,44 L68,40" stroke="#1d1310" stroke-width="2.6" stroke-linecap="round"/>
+      <ellipse cx="46" cy="52" rx="5" ry="6.5" fill="#1d1310"/><ellipse cx="74" cy="52" rx="5" ry="6.5" fill="#1d1310"/>
+      <circle cx="44.5" cy="50" r="1.8" fill="#fff"/><circle cx="72.5" cy="50" r="1.8" fill="#fff"/>
+      <path d="M53,66 Q60,62 67,66" fill="none" stroke="#1d1310" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <path d="M6,40 q-4,-8 2,-12 M114,40 q4,-8 -2,-12" stroke="#a79fc0" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <text x="96" y="20" font-family="Alegreya, serif" font-weight="900" font-size="22" fill="#f2c46d">?</text>
+  </svg>
+  <h1>Lelelilo can't float here</h1>
+  <p>Lelelilo's Adventure needs <b>WebGPU</b>, which this browser doesn't offer yet. It works in these:</p>
+  <div class="browsers">
+    <a href="https://www.google.com/chrome/" rel="noopener">Chrome · desktop &amp; Android</a>
+    <a href="https://www.microsoft.com/edge" rel="noopener">Edge</a>
+    <a href="https://www.apple.com/safari/" rel="noopener">Safari 26+ · Mac, iPhone, iPad</a>
+    <a href="https://www.mozilla.org/firefox/" rel="noopener">Firefox · Windows &amp; Mac</a>
+  </div>
+  <div class="help hidden" id="linux-help"></div>
+  <p id="why" style="font-size:13px"></p>
+</div>
+
+<div id="blank" class="hidden" role="alert">
+  <button id="blank-close" aria-label="Dismiss">✕</button>
+  <h2>Only seeing a dark screen?</h2>
+  <div id="blank-help"></div>
+</div>
+
+<div class="screen hidden" id="failed">
+  <h1>Lelelilo tripped</h1>
+  <p>Something went wrong while starting the game. Reloading usually helps.</p>
+  <div class="err" id="errtext"></div>
+</div>
+
+<script type="module">
+  const BUILD = 'ba4654b';
+  window.__lelelilo_build = BUILD;
+  // The screen's safe area (notches, rounded corners, the home bar) in CSS pixels, for the game's interface
+  const insetProbe = document.createElement('div');
+  insetProbe.style.cssText = 'position:fixed;inset:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
+  document.body.appendChild(insetProbe);
+  const measureInsets = () => { const s = getComputedStyle(insetProbe); window.__lelelilo_insets = [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft].map(v => parseFloat(v) || 0); };
+  measureInsets(); addEventListener('resize', measureInsets);
+  // Browsers start sound only after a tap or a key: the game's audio context (window.__lelelilo_audio) is resumed on
+  // the first one, and paused while the page is hidden (another tab, a phone's home screen)
+  const unlockAudio = () => { const a = window.__lelelilo_audio; if (a && a.state !== 'running' && !document.hidden) a.resume().catch(() => {}); };
+  for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, unlockAudio, { capture: true });
+  document.addEventListener('visibilitychange', () => {
+    const a = window.__lelelilo_audio; if (!a) return;
+    if (document.hidden) a.suspend().catch(() => {}); else if (navigator.userActivation?.hasBeenActive) a.resume().catch(() => {});
+  });
+  const $ = id => document.getElementById(id);
+  const show = id => { for (const s of ['loading', 'unsupported', 'failed']) $(s).classList.toggle('hidden', s !== id); };
+  const setProgress = k => {
+    k = Math.max(0, Math.min(1, k));
+    $('sewn').style.clipPath = `inset(0 ${(1 - k) * 100}% 0 0)`;
+    $('needle').style.transform = `translateX(${6 + k * 326}px)`;
+  };
+  const fail = e => { console.error(e); $('errtext').textContent = String(e && e.message || e); show('failed'); };
+  const LINUX = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
+  const FLAGS = `<ol><li>Open <code>${/Brave/.test(navigator.userAgent) || navigator.brave ? 'brave' : 'chrome'}://flags</code> and set <b>Unsafe WebGPU Support</b> to Enabled,</li>
+    <li><b>Vulkan</b> to Enabled,</li><li><b>Preferred Ozone platform</b> to X11 (WebGPU canvases stay dark under Wayland for now),</li><li>then relaunch the browser.</li></ol>`;
+  // On Linux, browsers keep WebGPU switched off for now: say how to switch it on
+  const linuxHelp = () => `<b>On Linux</b>, WebGPU is still switched off by default. In Chrome, Chromium, Brave or Edge:${FLAGS}
+    <p>Firefox doesn't offer WebGPU on Linux yet. A desktop version of the game for Linux is planned too.</p>`;
+
+  async function hasWebGPU() {
+    if (!navigator.gpu) return 'This browser has no WebGPU.';
+    try { const a = await navigator.gpu.requestAdapter(); return a ? null : 'WebGPU is present but found no usable graphics adapter.'; }
+    catch (e) { return 'WebGPU could not start: ' + e.message; }
+  }
+
+  // Some browsers draw WebGPU frames that never reach the screen, so the game runs but the page stays dark:
+  // - Chromium-based browsers under Wayland on Linux: the canvas reads back empty, so it can be detected;
+  // - Firefox's experimental WebGPU on Linux: the picture reads back fine and only fails on its way to the screen
+  //   (with software compositing it refuses the images WebGPU presents), so it can't be detected: warn up front.
+  async function checkVisible() {
+    const c = $('lelelilo');
+    if (LINUX && /Firefox\//.test(navigator.userAgent)) {
+      $('blank-help').innerHTML = `<p style="margin:0 0 4px;color:var(--dim)">Firefox's WebGPU on Linux is still experimental and often can't show its pictures: the game runs, but the screen may stay dark. For now, play in Chrome, Chromium, Brave or Edge:</p>${FLAGS}`;
+      $('blank').classList.remove('hidden');
+      $('blank-close').onclick = () => $('blank').classList.add('hidden');
+      return;
+    }
+    try {
+      await new Promise(r => requestAnimationFrame(r));
+      const o = document.createElement('canvas'); o.width = 64; o.height = 64;
+      const g = o.getContext('2d', { willReadFrequently: true }); g.drawImage(c, 0, 0, 64, 64);
+      const d = g.getImageData(0, 0, 64, 64).data;
+      for (let i = 3; i < d.length; i += 4) if (d[i] > 0) return;   // something is there: all good
+    } catch (e) { return; }   // can't tell: say nothing
+    $('blank-help').innerHTML = LINUX ? `<p style="margin:0 0 4px;color:var(--dim)">The game is running, but this browser isn't showing its pictures. On Linux:</p>${FLAGS}`
+      : `<p style="margin:0;color:var(--dim)">The game is running, but this browser isn't showing its pictures. Try updating it, or another browser such as Chrome, Edge or Safari.</p>`;
+    $('blank').classList.remove('hidden');
+    $('blank-close').onclick = () => $('blank').classList.add('hidden');
+  }
+
+  // Download the game with progress (the thread is sewn as the bytes arrive)
+  async function fetchWasm(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Could not download the game (${res.status})`);
+    const total = +res.headers.get('content-length') || 0, reader = res.body.getReader(), parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      parts.push(value); got += value.length;
+      setProgress(total ? got / total * 0.9 : Math.min(0.9, got / 6e6));
+    }
+    return new Response(new Blob(parts), { headers: { 'Content-Type': 'application/wasm' } });
+  }
+
+  (async () => {
+    const why = await hasWebGPU();
+    if (why) {
+      $('why').textContent = why;
+      if (LINUX) { $('linux-help').innerHTML = linuxHelp(); $('linux-help').classList.remove('hidden'); }
+      show('unsupported'); return;
+    }
+    try {
+      addEventListener('lelelilo-error', e => fail(e.detail));
+      addEventListener('lelelilo-ready', () => {
+        setProgress(1); $('status').textContent = 'Ready'; setTimeout(() => $('loading').classList.add('gone'), 250); $('lelelilo').focus();
+        if (!/capture/.test(location.search)) setTimeout(checkVisible, 800);
+      }, { once: true });
+      const [{ default: init }, wasm] = await Promise.all([import(`./pkg/lelelilo.js?v=${BUILD}`), fetchWasm(`./pkg/lelelilo_bg.wasm?v=${BUILD}`)]);
+      $('status').textContent = 'Stuffing the cushion…';
+      await init({ module_or_path: wasm });
+    } catch (e) { fail(e); }
+  })();
+</script>
 </body>
 </html>
