@@ -119,7 +119,7 @@
 </div>
 
 <script type="module">
-  const BUILD = '3688794';
+  const BUILD = 'e653331';
   window.__lelelilo_build = BUILD;
   // The screen's safe area (notches, rounded corners, the home bar) in CSS pixels, for the game's interface
   const insetProbe = document.createElement('div');
@@ -160,7 +160,8 @@
   // an installed app already fills the screen): until it is, the game waits under a card, and a tap goes full screen
   const FS_OK = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen) && document.fullscreenEnabled !== false;
   const INSTALLED = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
-  const MUST_FULL = TOUCH && FS_OK && !INSTALLED;
+  // (a capture for the checks draws its scene as is)
+  const MUST_FULL = TOUCH && FS_OK && !INSTALLED && !/capture/.test(location.search);
   if (TOUCH) {
     const onTap = () => { if ((MUST_FULL || wantFull()) && !isFull()) enterFull(); };
     for (const ev of ['pointerup', 'touchend']) addEventListener(ev, onTap, { capture: true });
