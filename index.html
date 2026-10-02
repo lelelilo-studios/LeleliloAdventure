@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#140f22">
 <meta name="description" content="Lelelilo's Adventure: a floating pillow wizard's journey through Oakvale and the Sundered Abyss.">
+<meta name="author" content="lelelilo.com">
 <title>Lelelilo's Adventure</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
@@ -55,10 +56,35 @@
   #blank h2 { margin: 0 0 6px; font: 900 20px 'Alegreya', Georgia, serif; }
   #blank button { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border: 0; border-radius: 10px; background: rgba(255,255,255,.08); color: var(--cream); font: 800 15px 'Alegreya Sans', sans-serif; cursor: pointer; }
   #blank.hidden, .help.hidden { display: none; }
+  /* The studio's page, at the foot of the loader's screens */
+  .studio { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); padding: 12px 16px;
+    font: 700 13px 'Alegreya Sans', sans-serif; letter-spacing: .06em; color: var(--brass); text-decoration: none; opacity: .8; }
+  .studio:hover { opacity: 1; text-decoration: underline; }
   @media (prefers-reduced-motion: reduce) { .pillow { animation: none; } }
 </style>
 </head>
 <body>
+<!-- The Lelelilo-Studios intro, first, over the download (see ~/Projects/games-intro-logo/INTEGRATE.md): any press after
+     it's had its moment skips it, and nothing pressed during it reaches the game -->
+<script src="lelelilo-intro/lelelilo-intro.js"></script>
+<script>
+  (function () {
+    // The game says when its first frame is up (or that it can't start): the intro then makes way
+    let ready;
+    const gameReady = new Promise(r => { ready = r; });
+    window.__lelelilo_game_ready = () => ready();
+    // (a capture for the checks draws its scene as is, with no intro)
+    if (/capture/.test(location.search)) { window.__lelelilo_intro_done = Promise.resolve(); return; }
+    // Its sound follows the game's: the sounds' volume in the saved settings, silent when they're all the way down
+    let sfx = 1;
+    try { const s = JSON.parse(localStorage.getItem('lelelilo_adventure_settings') || 'null'); if (s && s.data && typeof s.data.sfx_volume === 'number') sfx = s.data.sfx_volume; } catch (e) {}
+    const volume = Math.max(0, Math.min(1, 0.7 * sfx));
+    // (the game's own sound waits for the intro to end: it starts from the page's first press, see unlockAudio)
+    window.__lelelilo_intro_done = LeleliloIntro.play({ base: 'lelelilo-intro/', until: gameReady, sound: volume > 0 });
+    const v = document.querySelector('#lelelilo-intro video');
+    if (v) v.volume = volume;
+  })();
+</script>
 <canvas id="lelelilo" tabindex="0" aria-label="Lelelilo's Adventure"></canvas>
 
 <div class="screen" id="loading" role="status" aria-live="polite">
@@ -78,6 +104,7 @@
     <g class="needle" id="needle"><path d="M0,13 L22,11.2 L25,13 L22,14.8 Z"/><ellipse cx="4.5" cy="13" rx="2.6" ry=".9" fill="#140f22"/></g>
   </svg>
   <div class="status" id="status">Threading the needle…</div>
+  <a class="studio" href="https://lelelilo.com/?ref=leleliloadventure" target="_blank" rel="noopener">lelelilo.com</a>
 </div>
 
 <div class="screen hidden" id="unsupported">
@@ -104,6 +131,7 @@
   </div>
   <div class="help hidden" id="linux-help"></div>
   <p id="why" style="font-size:13px"></p>
+  <a class="studio" href="https://lelelilo.com/?ref=leleliloadventure" target="_blank" rel="noopener">lelelilo.com</a>
 </div>
 
 <div id="blank" class="hidden" role="alert">
@@ -116,10 +144,11 @@
   <h1>Lelelilo tripped</h1>
   <p>Something went wrong while starting the game. Reloading usually helps.</p>
   <div class="err" id="errtext"></div>
+  <a class="studio" href="https://lelelilo.com/?ref=leleliloadventure" target="_blank" rel="noopener">lelelilo.com</a>
 </div>
 
 <script type="module">
-  const BUILD = '421362c';
+  const BUILD = '010fb96';
   window.__lelelilo_build = BUILD;
   // The screen's safe area (notches, rounded corners, the home bar) in CSS pixels, for the game's interface
   const insetProbe = document.createElement('div');
@@ -131,6 +160,8 @@
   // the first one, and paused while the page is hidden (another tab, a phone's home screen)
   const unlockAudio = () => { const a = window.__lelelilo_audio; if (a && a.state !== 'running' && !document.hidden) a.resume().catch(() => {}); };
   for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, unlockAudio, { capture: true });
+  // (presses during the studio intro are its own: once it's over, the game's sound starts if the page was pressed)
+  window.__lelelilo_intro_done.then(() => { if (navigator.userActivation?.hasBeenActive) unlockAudio(); });
   document.addEventListener('visibilitychange', () => {
     const a = window.__lelelilo_audio; if (!a) return;
     if (document.hidden) a.suspend().catch(() => {}); else if (navigator.userActivation?.hasBeenActive) a.resume().catch(() => {});
@@ -185,7 +216,7 @@
     $('sewn').style.clipPath = `inset(0 ${(1 - k) * 100}% 0 0)`;
     $('needle').style.transform = `translateX(${6 + k * 326}px)`;
   };
-  const fail = e => { console.error(e); $('errtext').textContent = String(e && e.message || e); show('failed'); };
+  const fail = e => { console.error(e); $('errtext').textContent = String(e && e.message || e); show('failed'); window.__lelelilo_game_ready(); };
   const LINUX = /Linux/.test(navigator.userAgent) && !/Android/.test(navigator.userAgent);
   const FLAGS = `<ol><li>Open <code>${/Brave/.test(navigator.userAgent) || navigator.brave ? 'brave' : 'chrome'}://flags</code> and set <b>Unsafe WebGPU Support</b> to Enabled,</li>
     <li><b>Vulkan</b> to Enabled,</li><li><b>Preferred Ozone platform</b> to X11 (WebGPU canvases stay dark under Wayland for now),</li><li>then relaunch the browser.</li></ol>`;
@@ -243,12 +274,13 @@
     if (why) {
       $('why').textContent = why;
       if (LINUX) { $('linux-help').innerHTML = linuxHelp(); $('linux-help').classList.remove('hidden'); }
-      show('unsupported'); return;
+      show('unsupported'); window.__lelelilo_game_ready(); return;
     }
     try {
       addEventListener('lelelilo-error', e => fail(e.detail));
       addEventListener('lelelilo-ready', () => {
         setProgress(1); $('status').textContent = 'Ready'; setTimeout(() => $('loading').classList.add('gone'), 250); $('lelelilo').focus();
+        window.__lelelilo_game_ready();
         if (!/capture/.test(location.search)) setTimeout(checkVisible, 800);
       }, { once: true });
       const [{ default: init }, wasm] = await Promise.all([import(`./pkg/lelelilo.js?v=${BUILD}`), fetchWasm(`./pkg/lelelilo_bg.wasm?v=${BUILD}`)]);
